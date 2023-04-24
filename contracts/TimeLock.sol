@@ -1,33 +1,32 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-// Откладывание выполнения транзакции на определенный срок
-
+// Postponing the execution of a transaction for a certain period
 contract TimeLock {
     address public owner;
-
-    uint constant MIN_DELAY = 10;
-    uint constant MAX_DELAY = 100;
-    uint constant EXPIRY_DELAY = 1000; // время истекшей транзакции
+    uint256 constant MIN_DELAY = 10;
+    uint256 constant MAX_DELAY = 100;
+    // expired transaction time
+    uint256 constant EXPIRY_DELAY = 1000;
 
     mapping(bytes32 => bool) public queuedTxs;
 
     event Queued(
         bytes32 indexed txId,
         address indexed to,
-        uint value,
+        uint256 value,
         string func,
         bytes data,
-        uint timestamp
+        uint256 timestamp
     );
 
     event Executed(
         bytes32 indexed txId,
         address indexed to,
-        uint value,
+        uint256 value,
         string func,
         bytes data,
-        uint timestamp
+        uint256 timestamp
     );
 
     constructor() {
@@ -39,13 +38,13 @@ contract TimeLock {
         _;
     }
 
-    // ставим транзакцию в очередь (кодируем и добавляем в мэпинг)
+    // put the transaction in the queue (encode and add to the mapping)
     function queue(
-        address _to, // адрес ск runner
-        uint _value,
-        string calldata _func, // в контракте Runner функция run: "run(string"
-        bytes calldata _data, // результат функции prepareData в контракте Runner
-        uint _timestamp // результат функции newTimestamp в контракте Runner
+        address _to, // Runner contract address
+        uint256 _value,
+        string calldata _func, // Runner: function run
+        bytes calldata _data, // Runner: prepareData function result
+        uint256 _timestamp // Runner: newTimestamp function result
     ) external onlyOwner returns (bytes32) {
         bytes32 txId = keccak256(
             abi.encode(_to, _value, _func, _data, _timestamp)
@@ -63,13 +62,12 @@ contract TimeLock {
         return txId;
     }
 
-    // выполняем транзакцию
-    function execute(
+    function executeTransaction(
         address _to,
-        uint _value,
-        string calldata _func, // дублируем занчения выше
+        uint256 _value,
+        string calldata _func,
         bytes calldata _data,
-        uint _timestamp
+        uint256 _timestamp
     ) external payable onlyOwner returns (bytes memory) {
         bytes32 txId = keccak256(
             abi.encode(_to, _value, _func, _data, _timestamp)
@@ -82,10 +80,7 @@ contract TimeLock {
 
         bytes memory data;
         if (bytes(_func).length > 0) {
-            data = abi.encodePacked(
-                bytes4(keccak256(bytes(_func))), // обращение к функции через первые 4 байта
-                _data
-            );
+            data = abi.encodePacked(bytes4(keccak256(bytes(_func))), _data);
         } else {
             data = _data;
         }
@@ -98,19 +93,17 @@ contract TimeLock {
         return resp;
     }
 
-    // отменяем транзакцию
-    function cancel(bytes32 _txId) external onlyOwner {
+    function cancelTransaction(bytes32 _txId) external onlyOwner {
         require(queuedTxs[_txId], "not queued");
 
         delete queuedTxs[_txId];
     }
 }
 
-// тестирует написанный выше функционал
 contract Runner {
-    address public lock; // адрес ск выше
+    address public lock; // TimeLock address
     string public message;
-    mapping(address => uint) public payments;
+    mapping(address => uint256) public payments;
 
     constructor(address _lock) {
         lock = _lock;
@@ -123,11 +116,13 @@ contract Runner {
         message = newMsg;
     }
 
-    function newTimestamp() external view returns (uint) {
+    function newTimestamp() external view returns (uint256) {
         return block.timestamp + 20;
     }
 
-    function prepareData(string calldata _msg) external pure returns (bytes memory) {
+    function prepareData(
+        string calldata _msg
+    ) external pure returns (bytes memory) {
         return abi.encode(_msg);
     }
 }

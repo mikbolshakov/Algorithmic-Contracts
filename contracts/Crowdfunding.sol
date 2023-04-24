@@ -3,36 +3,43 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-contract Crowd {
+contract Crowdfunding {
     struct Campaign {
-        address owner; // владелец стартапа
-        uint goal; // сколько денег нужно собрать
-        uint pledged; // сколько инвестировали на данный момент
-        uint startAt;
-        uint endAt;
-        bool claimed; // забрал ли владалец деньги
+        address owner;
+        uint256 goal; // how much money to raise
+        uint256 pledged; // how much money raised so far
+        uint256 startAt;
+        uint256 endAt;
+        bool claimed; // did the owner take the money
     }
 
     IERC20 public immutable token;
-    mapping(uint => Campaign) public campaigns; // индекс компании => компания
-    uint public currentId;
-    mapping(uint => mapping(address => uint)) public pledges; // индекс компании => адрес инвестора => сумма инвестиций
-    uint public constant MAX_DURATION = 100 days;
-    uint public constant MIN_DURATION = 1 days;
+    uint256 public currentId;
+    uint256 public constant MAX_DURATION = 100 days;
+    uint256 public constant MIN_DURATION = 1 days;
+    // index of Campaign => Campaign
+    mapping(uint256 => Campaign) public campaigns;
+    // index of Campaign => investor address => amount of investment
+    mapping(uint256 => mapping(address => uint256)) public pledges;
 
-    event Launched(uint id, address owner, uint goal, uint startAt, uint endAt);
-    event Cancel(uint id);
-    event Pledged(uint id, address pledger, uint amount);
-    event Unpledged(uint id, address pledger, uint amount);
-    event Claimed(uint id);
-    event Refunded(uint id, address pledger, uint amount);
+    event Launched(
+        uint256 id,
+        address owner,
+        uint256 goal,
+        uint256 startAt,
+        uint256 endAt
+    );
+    event Cancel(uint256 id);
+    event Pledged(uint256 id, address pledger, uint256 amount);
+    event Unpledged(uint256 id, address pledger, uint256 amount);
+    event Claimed(uint256 id);
+    event Refunded(uint256 id, address pledger, uint256 amount);
 
     constructor(address _token) {
         token = IERC20(_token);
     }
 
-
-    function lounch(uint _goal, uint _startAt, uint _endAt) external {
+    function lounch(uint256 _goal, uint256 _startAt, uint256 _endAt) external {
         require(_startAt >= block.timestamp, "incorrect lounch time");
         require(_endAt >= _startAt + MIN_DURATION, "incorrect end time");
         require(_endAt <= _startAt + MAX_DURATION, "too long duration");
@@ -50,8 +57,8 @@ contract Crowd {
         emit Launched(currentId, msg.sender, _goal, _startAt, _endAt);
     }
 
-    function cancel(uint _id) external {
-        Campaign memory campaign = campaigns[_id]; // memory, так как компанию не меняем, а просто смотрим значения
+    function cancel(uint256 _id) external {
+        Campaign memory campaign = campaigns[_id];
         require(msg.sender == campaign.owner, "not an owner");
         require(block.timestamp >= campaign.startAt, "already started");
 
@@ -59,8 +66,8 @@ contract Crowd {
         emit Cancel(_id);
     }
 
-    function pledge(uint _id, uint _amount) external {
-        Campaign storage campaign = campaigns[_id]; // storage, так как меняем значения компании
+    function pledge(uint256 _id, uint256 _amount) external {
+        Campaign storage campaign = campaigns[_id];
         require(block.timestamp >= campaign.startAt, "not started");
         require(block.timestamp < campaign.endAt, "ended");
 
@@ -70,7 +77,7 @@ contract Crowd {
         emit Pledged(_id, msg.sender, _amount);
     }
 
-    function unpledge(uint _id, uint _amount) external {
+    function unpledge(uint256 _id, uint256 _amount) external {
         Campaign storage campaign = campaigns[_id];
         require(block.timestamp < campaign.endAt, "ended");
 
@@ -80,7 +87,7 @@ contract Crowd {
         emit Unpledged(_id, msg.sender, _amount);
     }
 
-    function claim(uint _id) external {
+    function claim(uint256 _id) external {
         Campaign storage campaign = campaigns[_id];
         require(msg.sender == campaign.owner, "not an owner");
         require(block.timestamp > campaign.endAt, "not ended");
@@ -92,12 +99,12 @@ contract Crowd {
         emit Claimed(_id);
     }
 
-    function refund(uint _id) external {
+    function refund(uint256 _id) external {
         Campaign storage campaign = campaigns[_id];
         require(block.timestamp > campaign.endAt, "not ended");
         require(campaign.pledged < campaign.goal, "reached goal");
 
-        uint pledgedAmount = pledges[_id][msg.sender];
+        uint256 pledgedAmount = pledges[_id][msg.sender];
         pledges[_id][msg.sender] = 0;
         token.transfer(msg.sender, pledgedAmount);
         emit Refunded(_id, msg.sender, pledgedAmount);

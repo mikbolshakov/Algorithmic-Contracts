@@ -6,17 +6,17 @@ contract EnglishAuction {
     address payable immutable seller;
     bool public started;
     bool public ended;
-    uint endAt;
-    uint public highestBid;
+    uint256 endAt;
+    uint256 public highestBid;
     address public highestBidder;
-    mapping(address => uint) public bids;
+    mapping(address => uint256) public bids;
 
-    event Start (string _item, uint _startingPrice);
-    event LastBid(address _bidder, uint _bid);
-    event End(address _highestBidder, uint _highestBid);
-    event Withdraw(address _sender, uint _amount);
+    event Start (string _item, uint256 _startingPrice);
+    event LastBid(address _bidder, uint256 _bid);
+    event End(address _highestBidder, uint256 _highestBid);
+    event Withdraw(address _sender, uint256 _amount);
 
-    constructor(string memory _item, uint _startingPrice) {
+    constructor(string memory _item, uint256 _startingPrice) {
         seller = payable(msg.sender);
         item = _item;
         highestBid = _startingPrice;
@@ -69,7 +69,7 @@ contract EnglishAuction {
     }
 
     function withdrawBids() external {
-        uint refundAmount = bids[msg.sender];
+        uint256 refundAmount = bids[msg.sender];
         require(refundAmount > 0, "nothing to refund");
 
         bids[msg.sender] = 0;
