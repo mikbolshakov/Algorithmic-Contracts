@@ -52,7 +52,7 @@ contract Crowd {
 
     function cancel(uint _id) external {
         Campaign memory campaign = campaigns[_id]; // memory, так как компанию не меняем, а просто смотрим значения
-        require(msg.msg.sender == campaign.owner, "not an owner");
+        require(msg.sender == campaign.owner, "not an owner");
         require(block.timestamp >= campaign.startAt, "already started");
 
         delete campaigns[_id];

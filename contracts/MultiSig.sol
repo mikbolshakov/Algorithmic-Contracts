@@ -45,7 +45,7 @@ contract Multisig is Ownable {
 
     // подтверждение, что транзакция существует
     modifier txExists(uint _tx) {
-        require(_txId < transactions.length, "not exist");
+        require(_tx < transactions.length, "not exist");
         _;
     }
 
@@ -114,7 +114,7 @@ contract Multisig is Ownable {
     }
 
     // выполняет транзакцию
-    function execute(uint _txId) external txExists(_txId) notExecuted(_txId) enoughApprovals(uint _txId) {
+    function execute(uint _txId) external txExists(_txId) notExecuted(_txId) enoughApprovals(_txId) {
         Transaction storage myTx = transactions[_txId];
         (bool success,) = myTx._to.call{value: myTx._value}(myTx._data);
         require(success, "tx failed");
@@ -133,7 +133,7 @@ contract Recevier {
     string public message;
 
     function getBalance() public view returns(uint) {
-        retunr address(this).balance;
+        return address(this).balance;
     }
 
     function getMoney(string memory _msg) external payable {
