@@ -36,6 +36,7 @@ contract VerifySignature {
     function _splitSig(
         bytes memory _sig
     ) internal pure returns (bytes32 r, bytes32 s, uint8 v) {
+        require(_sig.length == 65, "Invalid signature");
         assembly {
             r := mload(add(_sig, 32))
             s := mload(add(_sig, 64))
