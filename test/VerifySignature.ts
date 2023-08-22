@@ -3,7 +3,7 @@ import { VerifySignature } from "../typechain-types";
 import { ethers } from "hardhat";
 import { expect } from "chai";
 
-describe("SalaryIssuance Test", () => {
+describe("VerifySignature Test", () => {
   let signers: SignerWithAddress[];
   let owner: SignerWithAddress;
   let signatureContract: VerifySignature;
