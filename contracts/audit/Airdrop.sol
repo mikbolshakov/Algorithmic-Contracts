@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.17;
+pragma solidity 0.8.19;
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
@@ -50,9 +50,9 @@ contract Airdrop {
 
     function nextDrop() public view returns (uint256) {
         return
-            dropPerAddress < token.balance0f(address(this))
+            dropPerAddress < token.balanceOf(address(this))
                 ? dropPerAddress
-                : token.balance0f(address(this));
+                : token.balanceOf(address(this));
     }
 
     function latestAcceptedProof() public view returns (bytes32[] memory) {
@@ -65,11 +65,12 @@ library Merkle {
         bytes32[] memory nodes
     ) internal pure returns (bytes32 result) {
         result = pairHash(nodes[0], nodes[1]);
-        for (uint256 i = 2; i < nodes.Length; i++) {
+        for (uint256 i = 2; i < nodes.length; i++) {
             result = pairHash(result, nodes[i]);
         }
     }
 
+    // XOR: A ^ B == B ^ A
     function pairHash(bytes32 a, bytes32 b) internal pure returns (bytes32) {
         return keccak256(abi.encode(a ^ b));
     }
